@@ -1,0 +1,204 @@
+//https://train-scheduler-f028b.firebaseio.com/
+
+// Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyDxSChiR1dcNQXjr6kQc-A1RnxkaAVTpt4",
+    authDomain: "train-scheduler-f028b.firebaseapp.com",
+    databaseURL: "https://train-scheduler-f028b.firebaseio.com",
+    storageBucket: "train-scheduler-f028b.appspot.com",
+    messagingSenderId: "858892540684"
+  };
+  firebase.initializeApp(config);
+
+  
+    // Get a reference to the database service
+    var database = firebase.database()
+
+    $("#addTrain").on("click",function(){
+	database.ref().push({
+		tName: $("#train-name").val().trim(), //add the train name that was inputed by the user to the database
+		tDestination: $("#destination").val().trim(), //add the destination that was inputed by the user to the database
+		tDepartureTime: moment($("#first-train-time").val().trim(), "HH:mm").format("HH:mm"), // add the departure time that was submited by the user to the database
+		/**Note** this value is stored in epoch time **/
+		tFrequency: Number($("#frequency").val().trim()) //add the frequencey that was inputed by the user to the database (conver to seconds to add to epoch time later)
+	});
+});
+
+database.ref().on("child_added", function(childSnapshot,prevChildKey){
+	console.log(childSnapshot.val()); //log what was pulled from the database to the console
+
+	var trainName = childSnapshot.val().tName;
+	var tDestination = childSnapshot.val().tDestination;
+	var tDeparture = childSnapshot.val().tDepartureTime;
+	var tFrequency = childSnapshot.val().tFrequency;
+
+	// Assumptions
+    var tFrequency = 3;
+
+    // Time is 3:30 AM
+    var firstTime = "03:30";
+
+    // First Time (pushed back 1 year to make sure it comes before current time)
+    var firstTimeConverted = moment(firstTime, "HH:mm").subtract(1, "years");
+    console.log(firstTimeConverted);
+
+    // Current Time
+    var currentTime = moment();
+    console.log("CURRENT TIME: " + moment(currentTime).format("HH:mm"));
+    $("#currentTime").html("CURRENT TIME: " + moment(currentTime).format("HH:mm"));
+
+    // Difference between the times
+    var diffTime = moment().diff(moment(firstTimeConverted), "minutes");
+    console.log("DIFFERENCE IN TIME: " + diffTime);
+    $("#diffinTime").html("DIFFERENCE IN TIME: " + diffTime);
+
+    // Time apart (remainder)
+    var tRemainder = diffTime % tFrequency;
+    console.log(tRemainder);
+
+    // Minute Until Train
+    var tMinutesTillTrain = tFrequency - tRemainder;
+    console.log("MINUTES TILL TRAIN: " + tMinutesTillTrain);
+    $("#minsTillTrain").html("MINUTES TILL TRAIN: " + tMinutesTillTrain);
+
+    // Next Train
+    var nextTrain = moment().add(tMinutesTillTrain, "minutes");
+    console.log("ARRIVAL : " + moment(nextTrain).format("HH:mm"));
+    $("#next-train").html("Next Train : " + moment(nextTrain).format("HH:mm"));
+
+	//Add new train input into the table 
+	var newTrainInfo = $("<tr>") 
+		.append($("<td>").html(trainName))
+		.append($("<td>").html(tDestination))
+		.append($("<td>").html(tFrequency))
+		.append($("<td>").html(nextTrain))
+		.append($("<td>").html(tMinsTillTrain));
+	$("#train-table").append(newTrainInfo);
+});
+
+
+
+//<!-- Script -->
+  //<script>
+    // Assume the following situations.
+
+    // (TEST 1)
+    // First Train of the Day is 3:00 AM
+    // Assume Train comes every 3 minutes.
+    // Assume the current time is 3:16 AM....
+    // What time would the next train be...? (Use your brain first)
+    // It would be 3:18 -- 2 minutes away
+
+    // (TEST 2)
+    // First Train of the Day is 3:00 AM
+    // Assume Train comes every 7 minutes.
+    // Assume the current time is 3:16 AM....
+    // What time would the next train be...? (Use your brain first)
+    // It would be 3:21 -- 5 minutes away
+
+
+    // ==========================================================
+
+    // Solved Mathematically
+    // Test case 1:
+    // 16 - 00 = 16
+    // 16 % 3 = 1 (Modulus is the remainder)
+    // 3 - 1 = 2 minutes away
+    // 2 + 3:16 = 3:18
+
+    // Solved Mathematically
+    // Test case 2:
+    // 16 - 00 = 16
+    // 16 % 7 = 2 (Modulus is the remainder)
+    // 7 - 2 = 5 minutes away
+    // 5 + 3:16 = 3:21
+
+    // Assumptions
+    //var tFrequency = 3;
+
+    // Time is 3:30 AM
+    //var firstTime = "03:30";
+
+    // First Time (pushed back 1 year to make sure it comes before current time)
+    //var firstTimeConverted = moment(firstTime, "HH:mm").subtract(1, "years");
+    //console.log(firstTimeConverted);
+
+    // Current Time
+    //var currentTime = moment();
+    //console.log("CURRENT TIME: " + moment(currentTime).format("HH:mm"));
+    //$("#currentTime").html("CURRENT TIME: " + moment(currentTime).format("HH:mm"));
+
+    // Difference between the times
+    //var diffTime = moment().diff(moment(firstTimeConverted), "minutes");
+    //console.log("DIFFERENCE IN TIME: " + diffTime);
+    //$("#diffinTime").html("DIFFERENCE IN TIME: " + diffTime);
+
+    // Time apart (remainder)
+    //var tRemainder = diffTime % tFrequency;
+    //console.log(tRemainder);
+
+    // Minute Until Train
+    //var tMinutesTillTrain = tFrequency - tRemainder;
+    //console.log("MINUTES TILL TRAIN: " + tMinutesTillTrain);
+    //$("#minsTillTrain").html("MINUTES TILL TRAIN: " + tMinutesTillTrain);
+
+    // Next Train
+    //var nextTrain = moment().add(tMinutesTillTrain, "minutes");
+    //console.log("ARRIVAL : " + moment(nextTrain).format("HH:mm"));
+    //$("#next-train").html("Next Train : " + moment(nextTrain).format("HH:mm"));
+        
+  //</script>
+
+
+
+	/**
+
+    var trainName = "";
+    var destination ="";
+    var tFrequency = "";
+    var minsTillTrain = "";
+
+    $("#addTrain").on("click", function(){
+    	event.preventDefault();
+
+    	var trainName = $("#name-train").val().trim();
+    	var destination = $("#destination").val().trim();
+    	var tFrequency = $("#frequency").val().trim();
+    	var tMinsTillTrain = $("#mins-left").val().trim();
+
+    	console.log(trainName);
+    	console.log(destination);
+    	console.log(tFrequency);
+    	console.log(tMinsTillTrain);
+    });
+
+    //Adding Results to Firebase DB
+
+    database.ref().set({
+
+    })
+
+
+    // Initializing our click count at 0
+    var clickCounter = 0;
+
+    // Functions
+    // ================================================================================
+
+    // On Click
+    $("#click-button").on("click", function() {
+
+      // Add 1 to clickCounter
+      clickCounter++;
+
+      // **** Store Click Data to Firebase in a JSON property called clickCount *****
+      // **** Note how we are using the Firebase .set() method ****
+      // **** .ref() refers to the path you want to save your data to
+      // **** Since we left .ref() blank, it will save to the root directory
+      database.ref().set({
+        clickCount: clickCounter,
+        tenTimesCount: clickCounter *10
+      });
+
+      // Now! go to https://fir-click-counter-7cdb9.firebaseio.com/ to see the impact to the DB
+    });
